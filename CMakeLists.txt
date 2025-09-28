@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 4.0)
 
-include(CTest)
-
 project(mvec)
+
+include(CTest)
 
 include_directories(include)
 

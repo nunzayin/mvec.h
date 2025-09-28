@@ -6,9 +6,8 @@
 int main(void) {
     void* int_vec = mvec_alloc(23, sizeof(int));
     assert(int_vec);
-    int* iv = mvec_data(int_vec);
-    size_t* il = mvec_length(int_vec);
-    size_t* ic = mvec_capacity(int_vec);
+    int* iv; size_t* il; size_t* ic;
+    mvec_ptrs(int_vec, &ic, &il, (void**)&iv);
     assert(*ic == 23);
     for (size_t i = 0; i < 10; i++) {
         iv[i] = i+11;
