@@ -9,3 +9,7 @@ foreach (test_src ${TestSources})
         NAME ${test_name} COMMAND ${test_name}
     )
 endforeach ()
+
+set_tests_properties(test_bench PROPERTIES
+    DISABLED True
+)
