@@ -4,9 +4,9 @@
 #include <stdio.h>
 
 int main(void) {
-    void* int_vec = mvec_alloc(10, sizeof(int));
+    mvec_t* int_vec = mvec_alloc(10, sizeof(int));
     assert(int_vec);
-    void* initial_ptr = int_vec;
+    mvec_t* initial_ptr = int_vec;
     size_t* ic;
     size_t* il;
     int* iv;

@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 int main(void) {
-    void* int_vec = mvec_alloc(23, sizeof(int));
+    mvec_t* int_vec = mvec_alloc(23, sizeof(int));
     assert(int_vec);
     int* iv; size_t* il; size_t* ic;
     mvec_ptrs(int_vec, &ic, &il, (void**)&iv);
