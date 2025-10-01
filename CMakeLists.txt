@@ -6,4 +6,5 @@ include(CTest)
 
 include_directories(include)
 
+add_subdirectory(examples)
 add_subdirectory(tests)
