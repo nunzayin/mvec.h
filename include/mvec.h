@@ -74,11 +74,8 @@ static inline size_t mvsize(mvec_t* mvec) {
     return MVEC_HEADER_SIZE_BYTES + mvcap(mvec) * mvelsz(mvec);
 }
 
-#ifdef MVEC_IMPLEMENTATION
-#undef MVEC_IMPLEMENTATION
-
-#include <stdlib.h> // malloc, realloc, free
-#include <string.h> // memcpy, memmove
+// The following functions are UB-prone to use manually but left in the global
+// scope for those who know what they are doing. Here be dragons.
 
 static inline size_t* mvcap_ptr(mvec_t* mvec) {
     return (size_t*)mvec - 3;
@@ -96,11 +93,36 @@ static inline void* mvhead(mvec_t* mvec) {
     return (size_t*)mvec - 3;
 }
 
+#ifdef MVEC_IMPLEMENTATION
+#undef MVEC_IMPLEMENTATION
+
+// You can set custom allocator by defining corresponding macros. Note that
+// provided functions should have the same definitions, arguments order and
+// semantics. Fallback is stdlib's malloc() and friends.
+#if !defined(MVEC_MALLOC_FUNCTION) \
+    || !defined(MVEC_REALLOC_FUNCTION) \
+    || !defined(MVEC_FREE_FUNCTION)
+#include <stdlib.h> // malloc, realloc, free
+#define MVEC_MALLOC_FUNCTION malloc
+#define MVEC_REALLOC_FUNCTION realloc
+#define MVEC_FREE_FUNCTION free
+#endif
+
+// You can set custom memory copying/moving functions by defining corresponding
+// macros. Note that provided functions should have the same definitions,
+// arguments order and semantics. Fallback is stdlib's memcpy() and memmove().
+#if !defined(MVEC_MEMCPY_FUNCTION) \
+    || !defined(MVEC_MEMMOVE_FUNCTION)
+#include <string.h> // memcpy, memmove
+#define MVEC_MEMCPY_FUNCTION memcpy
+#define MVEC_MEMMOVE_FUNCTION memmove
+#endif
+
 // Allocates a new mvec with given capacity of elements with element_size each.
 // Sets length to 0. On success, returns a pointer to newly allocated mvec. On
 // failure, returns NULL.
 mvec_t* mvalloc(size_t capacity, size_t element_size) {
-    void* head = malloc(
+    void* head = MVEC_MALLOC_FUNCTION(
             MVEC_HEADER_SIZE_BYTES + capacity * element_size
             );
     if (!head) return NULL;
@@ -118,7 +140,7 @@ mvec_t* mvalloc(size_t capacity, size_t element_size) {
 // given mvec remains untouched.
 // UB: mvec == NULL or address of not a valid mvector
 mvec_t* mvresize(mvec_t* mvec, size_t new_capacity) {
-    void* new_head = realloc(
+    void* new_head = MVEC_REALLOC_FUNCTION(
             mvhead(mvec),
             MVEC_HEADER_SIZE_BYTES + new_capacity * mvelsz(mvec)
             );
@@ -174,7 +196,7 @@ void mvshift(mvec_t* mvec, size_t index, ptrdiff_t offset) {
 // the first element (i.e. physical head + MVEC_HEADER_SIZE_BYTES).
 // UB: mvec == NULL or address of not a valid mvector
 void mvfree(mvec_t* mvec) {
-    free(mvhead(mvec));
+    MVEC_FREE_FUNCTION(mvhead(mvec));
 }
 
 #endif // MVEC_IMPLEMENTATION
