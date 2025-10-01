@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 int main(void) {
-    int* iv = mvalloc(23, sizeof(int));
+    mvdef int* iv = mvalloc(23, sizeof(int));
     assert(iv);
     assert(mvelsz(iv));
     assert(mvcap(iv) == 23);

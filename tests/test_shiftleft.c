@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 int main(void) {
-    int* iv = mvalloc(24, sizeof(int));
+    mvdef int* iv = mvalloc(24, sizeof(int));
     assert(iv);
 
     for (size_t i = 0; i < 20; i++)

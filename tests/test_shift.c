@@ -4,7 +4,7 @@
 #include "mvec.h"
 
 int main(void) {
-    int* iv = mvalloc(10, sizeof(int));
+    mvdef int* iv = mvalloc(10, sizeof(int));
     assert(iv);
 
     // Let's try to use mvec as a queue.

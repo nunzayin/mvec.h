@@ -19,8 +19,8 @@ static int int_comp(const void* _a, const void* _b) {
     return 0;
 }
 
-static int* bench_mvec(void) {
-    int* iv = mvalloc(10, sizeof(int));
+static mvdef int* bench_mvec(void) {
+    mvdef int* iv = mvalloc(10, sizeof(int));
     assert(iv);
 
     for (size_t i = 0; i < AMOUNT_ELEMENTS_TO_ADD; i++) {
@@ -76,7 +76,7 @@ int main(void) {
             );
 
     assert(time(&time_start) != (time_t)(-1));
-    int* iv = bench_mvec();
+    mvdef int* iv = bench_mvec();
     assert(time(&time_end) != (time_t)(-1));
     bench_res = difftime(time_end, time_start);
     assert(*mvlen(iv) >= 6);

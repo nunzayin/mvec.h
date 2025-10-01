@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 int main(void) {
-    int* iv = mvalloc(10, sizeof(int));
+    mvdef int* iv = mvalloc(10, sizeof(int));
     assert(iv);
     int* initial_ptr = iv;
 

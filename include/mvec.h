@@ -28,6 +28,7 @@
 #include <stddef.h> // size_t, ptrdiff_t
 
 typedef void mvec_t;
+#define mvdef
 
 static const size_t MVEC_HEADER_SIZE_BYTES = 3 * sizeof(size_t);
 
