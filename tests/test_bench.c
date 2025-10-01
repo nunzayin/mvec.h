@@ -71,6 +71,11 @@ int main(void) {
     time_t time_end;
     double bench_res;
 
+    fprintf(stderr,
+            "Benchmarking mvec and manual dynarr with %zu elements each\n",
+            AMOUNT_ELEMENTS_TO_ADD
+            );
+
     assert(time(&time_start) != (time_t)(-1));
     mvec_t* int_vec = bench_mvec();
     assert(time(&time_end) != (time_t)(-1));
