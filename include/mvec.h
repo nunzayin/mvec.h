@@ -284,6 +284,7 @@ void mvec_shift(
 
 #undef MVEC_MALLOC_FUNCTION
 #undef MVEC_REALLOC_FUNCTION
+#undef MVEC_MEMMOVE_FUNCTION
 
 #endif // MVEC_IMPLEMENTATION
 #endif // !MVEC_H
