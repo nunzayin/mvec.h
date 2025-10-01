@@ -4,35 +4,32 @@
 #include <stdio.h>
 
 int main(void) {
-    mvec_t* int_vec = mvec_alloc(10, sizeof(int));
-    assert(int_vec);
-    mvec_t* initial_ptr = int_vec;
-    size_t* ic;
-    size_t* il;
-    int* iv;
-    mvec_ptrs(int_vec, &ic, &il, (void**)&iv);
+    int* iv = mvalloc(10, sizeof(int));
+    assert(iv);
+    int* initial_ptr = iv;
 
     for (size_t i = 0; i < 32; i++) {
-        if (*il == *ic) {
-            assert(!mvec_resize(&int_vec, *ic * 3 / 2, sizeof(int)));
-            mvec_ptrs(int_vec, &ic, &il, (void**)&iv);
-            fprintf(stderr, "mvec resized to capacity %zu\n", *ic);
+        if (*mvlen(iv) == mvcap(iv)) {
+            int* new_iv;
+            assert((new_iv = mvresize(iv, mvcap(iv) * 3 / 2)));
+            iv = new_iv;
+            fprintf(stderr, "mvec resized to capacity %zu\n", mvcap(iv));
         }
-        iv[*il] = 32-i;
-        *il += 1;
+        iv[*mvlen(iv)] = 32-i;
+        *mvlen(iv) += 1;
     }
-    assert(*ic == 33);
+    assert(mvcap(iv) == 33);
 
     fprintf(
             stderr,
             "Initial pointer: %p\n"
             "Current pointer: %p\n",
-            initial_ptr, int_vec
+            initial_ptr, iv
             );
 
-    for (size_t i = 0; i < *il; i++)
+    for (size_t i = 0; i < *mvlen(iv); i++)
         fprintf(stderr, "%d ", iv[i]);
     fprintf(stderr, "\n");
 
-    free(int_vec);
+    mvfree(iv);
 }

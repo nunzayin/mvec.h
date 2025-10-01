@@ -4,23 +4,21 @@
 #include <stdio.h>
 
 int main(void) {
-    mvec_t* int_vec = mvec_alloc(24, sizeof(int));
-    assert(int_vec);
-    int* iv; size_t* il;
-    mvec_ptrs(int_vec, NULL, &il, (void**)&iv);
+    int* iv = mvalloc(24, sizeof(int));
+    assert(iv);
 
     for (size_t i = 0; i < 20; i++)
-        iv[(*il)++] = i;
-    assert(*il == 20);
+        iv[(*mvlen(iv))++] = i;
+    assert(*mvlen(iv) == 20);
 
-    while (*il > 0) {
+    while (*mvlen(iv) > 0) {
         fprintf(stderr,
                 "Popped first element with value %d\n",
                 iv[0]
                );
-        mvec_shift(int_vec, 1, -1, sizeof(int));
+        mvshift(iv, 1, -1);
     }
-    assert(*il == 0);
+    assert(*mvlen(iv) == 0);
 
-    free(int_vec);
+    mvfree(iv);
 }

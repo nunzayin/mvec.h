@@ -19,22 +19,21 @@ static int int_comp(const void* _a, const void* _b) {
     return 0;
 }
 
-static mvec_t* bench_mvec(void) {
-    mvec_t* int_vec = mvec_alloc(10, sizeof(int));
-    assert(int_vec);
-    int* iv; size_t* il; size_t* ic;
-    mvec_ptrs(int_vec, &ic, &il, (void**)&iv);
+static int* bench_mvec(void) {
+    int* iv = mvalloc(10, sizeof(int));
+    assert(iv);
 
     for (size_t i = 0; i < AMOUNT_ELEMENTS_TO_ADD; i++) {
-        if (*il == *ic) {
-            assert(!mvec_resize(&int_vec, *ic * 2, sizeof(int)));
-            mvec_ptrs(int_vec, &ic, &il, (void**)&iv);
+        if (*mvlen(iv) == mvcap(iv)) {
+            int* new_iv;
+            assert((new_iv = mvresize(iv, mvcap(iv) * 2)));
+            iv = new_iv;
         }
-        iv[(*il)++] = randint(AMOUNT_ELEMENTS_TO_ADD);
+        iv[(*mvlen(iv))++] = randint(AMOUNT_ELEMENTS_TO_ADD);
     }
 
-    qsort((void*)iv, *il, sizeof(int), int_comp);
-    return int_vec;
+    qsort(iv, *mvlen(iv), sizeof(int), int_comp);
+    return iv;
 }
 
 typedef struct {
@@ -62,7 +61,7 @@ static IntDynamicArray bench_manual(void) {
         (int_arr.head)[int_arr.len++] = randint(AMOUNT_ELEMENTS_TO_ADD);
     }
 
-    qsort((void*)(int_arr.head), int_arr.len, sizeof(int), int_comp);
+    qsort(int_arr.head, int_arr.len, sizeof(int), int_comp);
     return int_arr;
 }
 
@@ -77,20 +76,18 @@ int main(void) {
             );
 
     assert(time(&time_start) != (time_t)(-1));
-    mvec_t* int_vec = bench_mvec();
+    int* iv = bench_mvec();
     assert(time(&time_end) != (time_t)(-1));
     bench_res = difftime(time_end, time_start);
-    int* iv; size_t* il;
-    mvec_ptrs(int_vec, NULL, &il, (void**)&iv);
-    assert(*il >= 6);
+    assert(*mvlen(iv) >= 6);
     fprintf(stderr,
             "MVEC\n"
             "ELEMENTS: %d %d %d ... %d %d %d\n"
             "BENCHMARK RESULTS: %.2fs\n",
-            iv[0], iv[1], iv[2], iv[(*il)-3], iv[(*il)-2], iv[(*il)-1],
-            bench_res
+            iv[0], iv[1], iv[2], iv[(*mvlen(iv))-3], iv[(*mvlen(iv))-2],
+            iv[(*mvlen(iv))-1], bench_res
             );
-    free(int_vec);
+    mvfree(iv);
 
     assert(time(&time_start) != (time_t)(-1));
     IntDynamicArray int_arr = bench_manual();
