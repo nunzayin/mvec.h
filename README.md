@@ -14,29 +14,30 @@ The vector stores information about its current capacity, length and size of a
 single element. Capacity is a maximum amount of elements that the vector can
 contain. Length is a logical size of the array, i.e. amount of elements already
 stored in the vector. All of these fields are of compile-time known
-constant-sized `size_t` type and form a so-called vector's header. The size of
-a vector's header in bytes is also a compile-time known constant available in
-the library.
+constant-sized `size_t` type and form a so-called vector's header.
+
+When custom allocators are used, MvecHeader also stores information about
+allocator that was used to allocate given vector.
 
 ```
-                    |(relative address)|     (value)     |
-                    |__________________|_________________|
-                    |        0         | size_t capacity |
-                    |  sizeof(size_t)  |  size_t length  |
-                    |2 * sizeof(size_t)|    sizeof(T)    |
-mvec_t* mvec -----> |3 * sizeof(size_t)|   T first_elem  |
-                    |       ...        |       ...       |
+                    | (relative address) |     (value)     |
+                    |____________________|_________________|
+                    |          0         |    MvecHeader   |
+mvec_t* mvec -----> |sizeof(MvecHeader)+1|   T first_elem  |
+                    |     (T*)mvec+1     |   T secnd_elem  |
+                    |     (T*)mvec+2     |   T third_elem  |
+                    |         ...        |       ...       |
 ```
 
 When the vector gets created, a single chunk of memory is allocated. The first
-`3 * sizeof(size_t)` bytes get reserved for the header. The entire subsequent
+`sizeof(MvecHeader)` bytes get reserved for the header. The entire subsequent
 section of given chunk is where the actual data (elements of the array) is
 stored.
 
 Even though the vector stores the size of a single element, you cannot store
 any other type info in it. Anyways, since technically `mvec_t` is a type alias
 for `void`, it is a common and useful practice to assign a pointer to a newly
-allocated mvec to a typed pointer:
+allocated mvec to a properly typed pointer:
 
 ```c
 mvdef int* iv = mvalloc(12, sizeof(*iv));
