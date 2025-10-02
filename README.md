@@ -76,5 +76,5 @@ it inherits the conditions under which the behavior is undefined. The library
 - Return values of some functions
 - Undefined behavior conditions in function descriptions
 
-The points mentioned above can though be used to build proper safety checks
-that cover most of the UB conditions on top of the library.
+The conditions mentioned above can though be used to build on top of the
+library proper safety checks that cover most of the UB conditions.
