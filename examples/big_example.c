@@ -6,8 +6,8 @@
 
 // Define this macro to include library implementation into this translation
 // unit. You probably gonna do it once in one of the units of your program and
-// then simply #include "mvec.h" in any other unit to link with the one with
-// implementation.
+// then simply #include "mvec.h" in any other unit to link with the one that
+// contains the implementation.
 #define MVEC_IMPLEMENTATION
 #include "mvec.h"
 
@@ -94,30 +94,47 @@ int main(void) {
     // also use mvresize() since it supports reallocating to any capacity (even
     // zero - try to figure out why).
     if (*mvlen(iv) < mvcap(iv)) {
-
         mvdef int* new_iv = mvresize(iv, *mvlen(iv));
         assert(new_iv);
         iv = new_iv;
     }
 
+    // This is kind of a soft reset. Elements are still there but beyond the
+    // logical border.
     *mvlen(iv) = 0;
 
+    // Let's add some new values
     assert(mvcap(iv) >= 5);
     for (size_t i = 0; i < 5; i++)
         iv[(*mvlen(iv))++] = i+1;
+    // Assert that we have space for two more
     assert(*mvlen(iv) + 2 <= mvcap(iv));
+    // Perform insertion to index 3: shift all the elements starting from index
+    // 3 to the length-1 with offset +1 (shift right by one element) and then
+    // assign a new value to the freed index.
     mvshift(iv, 3, +1);
     iv[3] = 1337;
+    // That's how you can 'rotate' the vector: append the first element and
+    // shift all elements starting from index 1 to the logical end left by one
     iv[(*mvlen(iv))++] = iv[0];
     mvshift(iv, 1, -1);
+    // Print vector's contents
     fputs("Current iv contents: ", stderr);
     for (size_t i = 0; i < *mvlen(iv); i++)
         fprintf(stderr, "%d ", iv[i]);
     fputc('\n', stderr);
 
+    // This is hard reset - zeroing all the elements via memset(..., 0, ...).
     memset(iv, 0, mvcap(iv) * mvelsz(iv));
+    // Assert that all the elements in the allocated area are zeroed out
     for (size_t i = 0; i < mvcap(iv); i++)
         assert(iv[i] == 0);
+
+    // You can also do things like that: release all the memory for elements
+    // but keep the vector initialized for future purposes
+    mvdef int* new_iv = mvresize(iv, 0);
+    assert(new_iv);
+    iv = new_iv;
 
     if (mvcap(iv) < 16) {
         mvdef int* new_iv = mvresize(iv, 16);
@@ -125,32 +142,51 @@ int main(void) {
         iv = new_iv;
     }
     *mvlen(iv) = 0;
+    // Fill up the vector with random values
     for (size_t i = 0; i < 16; i++)
         iv[(*mvlen(iv))++] = randint(16);
+    // Easily pass it to stdlib's qsort
     qsort(iv, *mvlen(iv), mvelsz(iv), int_comp);
     fputs("Current iv contents: ", stderr);
     for (size_t i = 0; i < *mvlen(iv); i++)
         fprintf(stderr, "%d ", iv[i]);
     fputc('\n', stderr);
 
+    // You can probably use shallow copies like that:
+    mvdef int* iv_shallow_copy = iv;
+    // But technically it copies only the pointer which means it points to the
+    // same mvec it was copied from, no new vector is initialized. It can be
+    // useful but also error-prone on such things as double mvfree().
+
+    // That's how you create full copy. A new copy may have another capacity,
+    // but only the elements in logical bounds are copied. Length can get
+    // trimmed.
     mvdef int* another_iv = mvcopy(iv, mvcap(iv));
+    // Don't forget to check for errors!
     assert(another_iv);
     fputs("Copied and modified iv contents: ", stderr);
-    for (size_t i = 0; i < *mvlen(iv); i++)
+    for (size_t i = 0; i < *mvlen(another_iv); i++)
         fprintf(stderr, "%d ", ++another_iv[i]);
     fputc('\n', stderr);
 
     int a[] = {42, 43, 44, 45};
     size_t al = 4;
+    // You can perform assigning an array (and any array-like) to mvec two
+    // ways. Either manually:
     for (size_t i = 0; i < al; i++)
         iv[i] = a[i];
-    memcpy(&iv[al], a, al * sizeof(int));
+    // Or via functions like memcpy():
+    memcpy(&iv[al], a, al * mvelsz(iv));
+    // Don't forget to update length!
     *mvlen(iv) = 2 * al;
     fputs("Current iv contents: ", stderr);
     for (size_t i = 0; i < *mvlen(iv); i++)
         fprintf(stderr, "%d ", iv[i]);
     fputc('\n', stderr);
 
+    // Mvectors are dynamically allocated. It depends on the specified
+    // allocator, but in most cases to avoid memory leaks mvfree() should be
+    // used to release all the memory allocated for the given vector.
     mvfree(iv);
     mvfree(another_iv);
 }
