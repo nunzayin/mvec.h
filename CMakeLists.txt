@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.0)
 
-project(mvec)
+project(mvec LANGUAGES C)
 
 include(CTest)
 
