@@ -13,7 +13,7 @@ int main(void) {
 
     for (size_t i = 0; i < 20; i++) {
         if (*mvlen(iv) == mvcap(iv)) {
-            int* new_iv;
+            mvdef int* new_iv;
             assert((new_iv = mvresize(iv, mvcap(iv) * 3 / 2)));
             iv = new_iv;
         }

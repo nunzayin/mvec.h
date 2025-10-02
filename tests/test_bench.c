@@ -25,7 +25,7 @@ static mvdef int* bench_mvec(void) {
 
     for (size_t i = 0; i < AMOUNT_ELEMENTS_TO_ADD; i++) {
         if (*mvlen(iv) == mvcap(iv)) {
-            int* new_iv;
+            mvdef int* new_iv;
             assert((new_iv = mvresize(iv, mvcap(iv) * 2)));
             iv = new_iv;
         }
