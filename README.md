@@ -143,4 +143,5 @@ you've defined there.
 ## Legal stuff
 
 Made by **nz**, aka **Nick Zaber** aka **nunzayin**
+
 Licensed under MIT license
