@@ -79,3 +79,38 @@ it inherits the conditions under which the behavior is undefined. The library
 
 The conditions mentioned above can though be used to build on top of the
 library proper safety checks that cover most of the UB conditions.
+
+Monolithic vectors are initialized in dynamically allocated memory chunks. To
+avoid memory leak, don't forget to call `mvfree()` to release the memory. Avoid
+double frees and other memory management mistakes.
+
+## Usage
+
+1. Copy the `mvec.h` to the place you usually resolve headers from. This is the
+only file you need.
+2. `#include "mvec.h"` as usual header where you need.
+3. `#define MVEC_IMPLEMENTATION` **before** `#include`ing `"mvec.h"` in the
+translation unit in which you want the library implementation to be added. You
+can also add a separate file (let's call it `mvec.c`) and leave there only two
+lines:
+
+```c
+#define MVEC_IMPLEMENTATION
+#include "mvec.h"
+```
+
+4. Enjoy. See the `tests` and `examples` for example usage in source code.
+
+If you need custom allocators support, `#define MVEC_CUSTOM_ALLOCATORS` before
+`#include`ing the header. If you have a ton of sources, it might be better
+to define this macro using your compiler/build system functionality (e.g.
+CMake's `add_compile_definitions(MVEC_CUSTOM_ALLOCATORS)`).
+Set the library's current allocator via `mvec_setAllocator` before calling any
+(re)allocating/freeing functions. Note: mvectors remember the allocator they
+were allocated with. It also affects on mvec header size.
+
+If you need custom `memcpy()` and `memmove()` support, consider defining
+`MVEC_CUSTOM_MEMFUNCS` the same way you would do that with
+`MVEC_CUSTOM_ALLOCATORS`. Set the library's current `memcpy()` and `memmove()`
+implementations via `mvec_setMemcpy()` and `mvec_setMemmove()` respectively
+before calling any functions that use these ones.
