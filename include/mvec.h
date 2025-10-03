@@ -1,26 +1,26 @@
 // mvec.h - Monolithic vector
 
-// MIT License
-//
-// Copyright (c) 2025 nunzayin
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+/* MIT License
+
+Copyright (c) 2025 nunzayin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE. */
 
 #ifndef MVEC_H
 #define MVEC_H
@@ -71,6 +71,13 @@ static inline size_t mvcap(mvec_t* mvec);
 static inline size_t mvelsz(mvec_t* mvec);
 static inline size_t mvsize(mvec_t* mvec);
 
+mvec_t* mvec_fromNormal(void* data, size_t length, size_t element_size);
+void* mvec_toNormal(
+        mvec_t* mvec,
+        size_t* length_out,
+        size_t* element_size_out
+        );
+
 static inline MvecHeader* mvhead(mvec_t* mvec);
 
 #ifdef MVEC_CUSTOM_ALLOCATORS
@@ -117,16 +124,9 @@ static inline MvecHeader* mvhead(mvec_t* mvec) {
 #ifdef MVEC_IMPLEMENTATION
 #undef MVEC_IMPLEMENTATION
 
-#ifdef MVEC_CUSTOM_ALLOCATORS
-#define MVEC_MALLOC_FUNCTION mvec_current_allocator.malloc
-#define MVEC_REALLOC_FUNCTION mvhead(mvec)->realloc
-#define MVEC_FREE_FUNCTION mvhead(mvec)->free
-#else // !MVEC_CUSTOM_ALLOCATORS
+#ifndef MVEC_CUSTOM_ALLOCATORS
 #include <stdlib.h> // malloc, realloc, free
-#define MVEC_MALLOC_FUNCTION malloc
-#define MVEC_REALLOC_FUNCTION realloc
-#define MVEC_FREE_FUNCTION free
-#endif // MVEC_CUSTOM_ALLOCATORS
+#endif // !MVEC_CUSTOM_ALLOCATORS
 
 #ifdef MVEC_CUSTOM_MEMFUNCS
 #define MVEC_MEMCPY_FUNCTION mvec_current_memcpy
@@ -178,9 +178,11 @@ static inline mvec_t* mvec_fromHeader(MvecHeader* mvec_header) {
 //  @ reading from returned vector's contents before initialization
 //  @ accessing vector's contents beyond its capacity
 mvec_t* mvalloc(size_t capacity, size_t element_size) {
-    MvecHeader* head = MVEC_MALLOC_FUNCTION(
-            sizeof(MvecHeader) + capacity * element_size
-            );
+    MvecHeader* head =
+#ifdef MVEC_CUSTOM_ALLOCATORS
+        mvec_current_allocator.
+#endif // MVEC_CUSTOM_ALLOCATORS
+        malloc(sizeof(MvecHeader) + capacity * element_size);
     if (!head) return NULL;
     mvec_t* mvec = mvec_fromHeader(head);
 #ifdef MVEC_CUSTOM_ALLOCATORS
@@ -200,7 +202,11 @@ mvec_t* mvalloc(size_t capacity, size_t element_size) {
 // given mvec remains untouched.
 // UB: mvec == NULL or address of not a valid mvector
 mvec_t* mvresize(mvec_t* mvec, size_t new_capacity) {
-    MvecHeader* new_head = MVEC_REALLOC_FUNCTION(
+    MvecHeader* new_head =
+#ifdef MVEC_CUSTOM_ALLOCATORS
+        mvhead(mvec)->
+#endif // MVEC_CUSTOM_ALLOCATORS
+        realloc(
             mvhead(mvec),
             sizeof(MvecHeader) + new_capacity * mvelsz(mvec)
             );
@@ -257,7 +263,66 @@ void mvshift(mvec_t* mvec, size_t index, ptrdiff_t offset) {
 // the first element (i.e. physical head + sizeof(MvecHeader)).
 // UB: mvec == NULL or address of not a valid mvector
 void mvfree(mvec_t* mvec) {
-    MVEC_FREE_FUNCTION(mvhead(mvec));
+#ifdef MVEC_CUSTOM_ALLOCATORS
+    mvhead(mvec)->
+#endif // MVEC_CUSTOM_ALLOCATORS
+    free(mvhead(mvec));
+}
+
+mvec_t* mvec_fromNormal(void* data, size_t length, size_t element_size) {
+    void* head =
+#ifdef MVEC_CUSTOM_ALLOCATORS
+        mvec_current_allocator.
+#endif // MVEC_CUSTOM_ALLOCATORS
+        realloc(data, sizeof(MvecHeader) + length * element_size);
+    if (!head) return NULL;
+    mvec_t* mvec = MVEC_MEMMOVE_FUNCTION(
+                (char*)head + sizeof(MvecHeader),
+                head,
+                length * element_size
+                );
+#ifdef MVEC_CUSTOM_ALLOCATORS
+    mvhead(mvec)->realloc = mvec_current_allocator.realloc;
+    mvhead(mvec)->free = mvec_current_allocator.free;
+#endif // MVEC_CUSTOM_ALLOCATORS
+    *mvlen(mvec) = length;
+    mvhead(mvec)->capacity = length;
+    mvhead(mvec)->element_size = element_size;
+    return mvec;
+}
+
+void* mvec_toNormal(
+        mvec_t* mvec,
+        size_t* length_out,
+        size_t* element_size_out
+        )
+{
+    MvecHeader header_backup = *mvhead(mvec);
+    void* mvec_shifted = MVEC_MEMMOVE_FUNCTION(
+            mvhead(mvec),
+            mvec,
+            *mvlen(mvec) * mvelsz(mvec)
+            );
+    void* out =
+#ifdef MVEC_CUSTOM_ALLOCATORS
+        header_backup.
+#endif // MVEC_CUSTOM_ALLOCATORS
+        realloc(
+            mvec_shifted,
+            header_backup.length * header_backup.element_size
+            );
+    if (!out) {
+        MVEC_MEMMOVE_FUNCTION(
+            (char*)mvec_shifted + sizeof(MvecHeader),
+            mvec_shifted,
+            header_backup.length * header_backup.element_size
+            );
+        *mvhead(mvec) = header_backup;
+        return NULL;
+    }
+    if (length_out) *length_out = header_backup.length;
+    if (element_size_out) *element_size_out = header_backup.element_size;
+    return out;
 }
 
 #endif // MVEC_IMPLEMENTATION
