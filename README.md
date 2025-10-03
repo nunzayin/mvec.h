@@ -114,3 +114,33 @@ If you need custom `memcpy()` and `memmove()` support, consider defining
 `MVEC_CUSTOM_ALLOCATORS`. Set the library's current `memcpy()` and `memmove()`
 implementations via `mvec_setMemcpy()` and `mvec_setMemmove()` respectively
 before calling any functions that use these ones.
+
+## Development
+
+To build the project, `cd` to the root of the repository and perform these
+commands:
+
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+It will produce all tests and examples. To run tests, use the generated
+pseudo-target `test` in the build system. E.g. for `make`, simply:
+
+```bash
+make test
+```
+
+Try the examples built into the `examples` directory. Also try `test_bench`
+which is disabled for taking too long.
+
+Of course, when copying the header to your project, it will obey the rules
+you've defined there.
+
+## Legal stuff
+
+Made by **nz**, aka **Nick Zaber** aka **nunzayin**
+Licensed under MIT license
