@@ -124,12 +124,9 @@ cmake ..
 cmake --build .
 ```
 
-It will produce all tests and examples. To run tests, use the generated
-pseudo-target `test` in the build system. E.g. for `make`, simply:
-
-```bash
-make test
-```
+It will produce all tests and examples. To run tests, run `ctest` or use the
+generated pseudo-target `test` in the build system. E.g. for `make`, simply
+`make test`.
 
 Try the examples built into the `examples` directory. Also try `test_bench`
 which is disabled for taking too long.
