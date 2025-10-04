@@ -3,7 +3,7 @@
 #include "mvec.h"
 
 int main(void) {
-    mvdef int* iv = mvalloc(24, sizeof(*iv));
+    mvdef int* iv = mvalloc(24, sizeof(int));
     assert(iv);
     for (size_t i = 0; i < 16; i++) {
         iv[(*mvlen(iv))++] = i;

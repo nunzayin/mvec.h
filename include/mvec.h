@@ -31,7 +31,7 @@ SOFTWARE. */
 typedef void mvec_t;
 
 // Use this macro when declaring new vectors, e.g.:
-//  mvdef int* iv = mvalloc(12, sizeof(*iv));
+//  mvdef int* iv = mvalloc(12, sizeof(int));
 // This macro technically does nothing so you don't have to worry about (not)
 // using it but still can improve the readability
 #define mvdef

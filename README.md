@@ -40,7 +40,7 @@ for `void`, it is a common and useful practice to assign a pointer to a newly
 allocated mvec to a properly typed pointer:
 
 ```c
-mvdef int* iv = mvalloc(12, sizeof(*iv));
+mvdef int* iv = mvalloc(12, sizeof(int));
 ```
 
 Let's decompose it.
@@ -55,9 +55,6 @@ multiple amount of elements, e.g. `iv[2]`.
 
 `mvalloc`'s return type is `mvec_t*`, which is technically a `void*`, so the
 implicit type conversion occurs.
-
-Since `iv` is a pointer to complete object type, you can just pass
-`sizeof(*iv)` as a size of a single element.
 
 The library provides only the core functionality. There are several reasons:
 - A relatively small storage space footprint.
