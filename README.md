@@ -1,3 +1,60 @@
+> [!WARNING]
+> This library is deprecated. I knew I was re-inventing a bicycle, but didn't
+> think it was SO old that its support was added in C99.
+> Consider using flexible array members to achieve somewhat the same effect
+> as provided by the library. Here's an example below.
+
+```c
+// Definition
+
+#include <stdlib.h>
+#include <assert.h>
+
+#define INITIAL_CAPACITY 16
+
+typedef struct {
+    size_t cap;
+    size_t len;
+    int data[]; // This line does the trick
+} IntVec;
+
+int main(void)
+{
+    // Initialization
+
+    // sizeof(IntVec) gives amount of bytes for the header (cap and len) AND
+    //  optional implementation-defined padding (which is ok not to worry about
+    //  in most cases), as if the flexible array member was fully empty.
+    IntVec *iv = malloc(sizeof(IntVec) + INITIAL_CAPACITY * sizeof(int));
+    assert(iv);
+    iv->cap = INITIAL_CAPACITY;
+    iv->len = 0;
+
+    // Usage
+
+    iv->data[0] = 1337;
+    iv->len += 1;
+
+    for (int i = iv[0] + 1; iv->len < iv->cap; i++)
+    {
+        iv[iv->len++] = i;
+    }
+
+    // Resizing
+
+    // It can be pretty error-prone though, you probably better make a helper
+    //  function or macro
+    IntVec *new_iv = realloc(iv, sizeof(IntVec) + 2 * iv->cap * sizeof(int));
+    assert(new_iv);
+    iv = new_iv;
+    iv->cap *= 2;
+
+    // Freeing
+
+    free(iv);
+}
+```
+
 # mvec.h
 
 This is a single-header library implementing the core set of functions to work
